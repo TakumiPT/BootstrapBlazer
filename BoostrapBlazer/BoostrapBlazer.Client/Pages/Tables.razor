@@ -1,0 +1,194 @@
+﻿@page "/tables"
+@using Core
+@rendermode InteractiveServer
+
+
+<Table Value="Products" Columns="ColumnsData" RowsPerPage="5" Paginator="true">
+	<TemplateHeader>
+
+		<tr>
+
+			@foreach (var col in @context)
+			{
+					<th scope="col">@col.Header</th>
+			}
+
+		</tr>
+	</TemplateHeader>
+
+	<TemplateBody>
+		<tr>
+			@foreach (var col in ColumnsData)
+			{
+					<td>
+
+					@if (context.GetType().GetProperty(col.Header) != null)
+					{
+						@context.GetType().GetProperty(col.Header)?.GetValue(context)
+					}
+					</td>
+			}
+		</tr>
+	</TemplateBody>
+</Table>
+
+@code {
+
+	public class Columns : IColumns
+	{
+		public required string Field { get; set; }
+		public required string Header { get; set; }
+	}
+
+	public class Product
+	{
+		public string Id { get; set; }
+		public string Code { get; set; }
+		public string Name { get; set; }
+		public string Description { get; set; }
+		public string Image { get; set; }
+		public decimal Price { get; set; }
+		public string Category { get; set; }
+		public int Quantity { get; set; }
+		public string InventoryStatus { get; set; }
+		public float Rating { get; set; }
+	}
+
+	public List<IColumns> ColumnsData = new List<IColumns>()
+	{
+		new Columns { Field = "Code", Header = "Code" },
+		new Columns { Field = "Name", Header = "Name" },
+		new Columns { Field = "Category", Header = "Category" },
+		new Columns { Field = "Quantity", Header = "Quantity" }
+	};
+
+	public List<Product> Products { get; set; } = new List<Product>()
+  {
+	// Product 1
+	  new Product
+	  {
+		Id = "P1001",
+		Code = "SAMPLE_CODE_01",
+		Name = "Unique Product 1",
+		Description = "This is a unique product description 1.",
+		Image = "product_01.jpg",
+		Price = 19.99m,
+		Category = "Clothing",
+		Quantity = 20,
+		InventoryStatus = "INSTOCK",
+		Rating = 4.5f
+	  },
+	  // Product 2
+	  new Product
+	  {
+		Id = "P1002",
+		Code = "SAMPLE_CODE_02",
+		Name = "Unique Product 2",
+		Description = "This is a unique product description 2.",
+		Image = "product_02.jpg",
+		Price = 49.95m,
+		Category = "Electronics",
+		Quantity = 100,
+		InventoryStatus = "LOWSTOCK",
+		Rating = 3.8f
+	  },
+	  // Product 3
+	  new Product
+	  {
+		Id = "P1003",
+		Code = "SAMPLE_CODE_03",
+		Name = "Unique Product 3",
+		Description = "This is a unique product description 3.",
+		Image = "product_03.jpg",
+		Price = 7.50m,
+		Category = "Homeware",
+		Quantity = 5,
+		InventoryStatus = "OUTOFSTOCK",
+		Rating = 5.0f
+	  },
+	  // Product 4
+	  new Product
+	  {
+		Id = "P1004",
+		Code = "SAMPLE_CODE_04",
+		Name = "Unique Product 4",
+		Description = "This is a unique product description 4.",
+		Image = "product_04.jpg",
+		Price = 34.99m,
+		Category = "Sports",
+		Quantity = 35,
+		InventoryStatus = "INSTOCK",
+		Rating = 4.2f
+	  },
+	  // Product 5
+	  new Product
+	  {
+		Id = "P1005",
+		Code = "SAMPLE_CODE_05",
+		Name = "Unique Product 5",
+		Description = "This is a unique product description 5.",
+		Image = "product_05.jpg",
+		Price = 12.99m,
+		Category = "Books",
+		Quantity = 8,
+		InventoryStatus = "INSTOCK",
+		Rating = 4.8f
+	  },
+	  // Product 6 (Slightly different from others)
+	  new Product
+	  {
+		Id = "P1001", // Reuse ID but with different properties
+		Code = "SAMPLE_CODE_REUSED",
+		Name = "Similar But Different",
+		Description = "This product has a reused ID but different details.",
+		Image = "product_reused.jpg",
+		Price = 29.50m,
+		Category = "Electronics",
+		Quantity = 15,
+		InventoryStatus = "INSTOCK",
+		Rating = 4.0f
+	  },
+	  // Product 7
+	  new Product
+	  {
+		Id = "P1006",
+		Code = "SAMPLE_CODE_06",
+		Name = "Unique Product 6",
+		Description = "This is a unique product description 6.",
+		Image = "product_06.jpg",
+		Price = 22.00m,
+		Category = "Toys",
+		Quantity = 70,
+		InventoryStatus = "INSTOCK",
+		Rating = 4
+	  },
+	  // Product 8
+	  new Product
+	  {
+		Id = "P1007",
+		Code = "SAMPLE_CODE_07",
+		Name = "Unique Product 7",
+		Description = "This is a unique product description 7.",
+		Image = "product_07.jpg",
+		Price = 99.99m,
+		Category = "Appliances",
+		Quantity = 2,
+		InventoryStatus = "INSTOCK",
+		Rating = 4.7f
+	  },
+		new Product
+		{
+		  Id = "1001",
+		  Code = "SAMPLE_CODE_1",
+		  Name = "Sample Product 1",
+		  Description = "This is a sample product description.",
+		  Image = "product_1.jpg",
+		  Price = 25.50m,
+		  Category = "Electronics",
+		  Quantity = 50,
+		  InventoryStatus = "INSTOCK",
+		  Rating = 4
+		},
+  };
+}
+

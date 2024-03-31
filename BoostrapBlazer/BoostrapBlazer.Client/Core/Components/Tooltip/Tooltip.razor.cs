@@ -4,7 +4,6 @@ namespace Core;
 
 public partial class Tooltip : ComponentBase, IAsyncDisposable
 {
-	private bool isFirstRenderComplete = false;
 	private string? title;
 
 

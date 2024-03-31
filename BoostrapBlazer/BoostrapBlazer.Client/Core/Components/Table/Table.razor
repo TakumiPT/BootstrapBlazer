@@ -1,0 +1,145 @@
+﻿@namespace Core
+@inherits ComponentBase
+
+@typeparam TItem
+
+@if (TemplateCaption != null)
+{
+	<div>
+		@TemplateCaption
+	</div>
+
+}
+
+<table class="table">
+	<thead>
+		@if (TemplateHeader != null)
+		{
+			@TemplateHeader(Columns)
+		}
+	</thead>
+	<tbody>
+		@if (TemplateBody != null)
+		{
+			@foreach (var rowData in data)
+			{
+				@TemplateBody(rowData)
+			}
+		}
+	</tbody>
+	<tfoot>
+		@if (TemplateFooter != null)
+		{
+			@TemplateFooter
+		}
+	</tfoot>
+</table>
+
+@if (Paginator)
+{
+	<nav aria-label="Page navigation" class="pagination justify-content-center">
+		<ul class="pagination">
+			<li class="page-item @(currentPage == 1 ? "disabled" : "")">
+				<button class="page-link" @onclick="@(() => OnPageChange(currentPage - 1))" disabled="@(currentPage == 1)">
+					<i class="bi bi-chevron-double-left"></i>
+				</button>
+			</li>
+
+			@for (int i = 1; i <= GetTotalPages(); i++)
+			{
+				// Capture the current value of i in a separate variable
+				int currentPageNumber = i;
+
+				<li class="page-item @(currentPage == currentPageNumber ? "active" : "")">
+					<button class="page-link" @onclick="@(() => OnPageChange(currentPageNumber))">@i</button>
+				</li>
+			}
+
+			<li class="page-item @(currentPage == GetTotalPages() ? "disabled" : "")">
+				<button class="page-link" @onclick="@(() => OnPageChange(currentPage + 1))"
+					disabled="@(currentPage == GetTotalPages())">
+					<i class="bi bi-chevron-double-right"></i>
+				</button>
+			</li>
+		</ul>
+	</nav>
+}
+
+@code {
+	[Parameter]
+	public bool Paginator { get; set; } = false;
+
+	[Parameter]
+	[EditorRequired]
+	public List<TItem> Value { get; set; } = new List<TItem>();
+
+	[Parameter]
+	public RenderFragment<TItem> TemplateBody { get; set; } = default!;
+
+	[Parameter]
+	public List<IColumns> Columns { get; set; } = new List<IColumns>();
+
+	[Parameter]
+	public RenderFragment<List<IColumns>> TemplateHeader { get; set; } = default!;
+
+
+	// Use RowsPerPage for pagination, default to 10
+	[Parameter]
+	public int RowsPerPage { get; set; } = default!;
+
+	[Parameter]
+	public RenderFragment TemplateCaption { get; set; } = default!;
+
+	[Parameter]
+	public RenderFragment TemplateFooter { get; set; } = default!;
+
+	private List<TItem> data = new List<TItem>();
+	private int currentPage = 1;
+
+	protected override void OnInitialized()
+	{
+		CreatePaginatedData();
+	}
+
+	private void CreatePaginatedData()
+	{
+		// Ensure Values is not null or empty
+		if (Value?.Any() != true)
+		{
+			data = new List<TItem>();
+			return;
+		}
+
+		if (Paginator == false)
+		{
+			data = Value;
+			return;
+		}
+
+		// Handle RowsPerPage being null or 0 (show all data)
+		int pageSize = RowsPerPage > 0 ? RowsPerPage : Value.Count;
+
+		data = Value.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+	}
+
+	private int GetTotalPages()
+	{
+		if (Value?.Any() != true)
+		{
+			return 0;
+		}
+
+		int totalItems = Value.Count;
+		int totalPages = (int)Math.Ceiling((double)totalItems / RowsPerPage);
+		return totalPages;
+	}
+
+	private void OnPageChange(int newPage)
+	{
+		if (newPage >= 1 && newPage <= GetTotalPages()) // Ensures valid page range
+		{
+			currentPage = newPage;
+			CreatePaginatedData();
+		}
+	}
+}
