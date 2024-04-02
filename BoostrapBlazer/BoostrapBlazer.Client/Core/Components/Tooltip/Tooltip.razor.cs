@@ -30,7 +30,7 @@ public partial class Tooltip : ComponentBase, IAsyncDisposable
 	{
 		title = Title;
 
-		await JS.InvokeVoidAsync("window.blazorBootstrap.tooltip.initialize", ElementRef);
+		await JS.InvokeVoidAsync("window.coreUI.tooltip.initialize", ElementRef);
 
 		await base.OnAfterRenderAsync(firstRender);
 	}
@@ -40,6 +40,6 @@ public partial class Tooltip : ComponentBase, IAsyncDisposable
 	public async ValueTask DisposeAsync()
 	{
 
-		await JS.InvokeVoidAsync("window.blazorBootstrap.tooltip.dispose", ElementRef);
+		await JS.InvokeVoidAsync("window.coreUI.tooltip.dispose", ElementRef);
 	}
 }
