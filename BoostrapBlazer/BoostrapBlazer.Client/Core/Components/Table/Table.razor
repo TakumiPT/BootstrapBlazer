@@ -10,30 +10,31 @@
 	</div>
 
 }
-
-<table class="table">
-	<thead>
-		@if (TemplateHeader != null)
-		{
-			@TemplateHeader(Columns)
-		}
-	</thead>
-	<tbody>
-		@if (TemplateBody != null)
-		{
-			@foreach (var rowData in data)
+<div class="@responsive">
+	<table class="table @striped @bordered @rowHover @tableStyleClass">
+		<thead class="@headColor">
+			@if (TemplateHeader != null)
 			{
-				@TemplateBody(rowData)
+				@TemplateHeader(Columns)
 			}
-		}
-	</tbody>
-	<tfoot>
-		@if (TemplateFooter != null)
-		{
-			@TemplateFooter
-		}
-	</tfoot>
-</table>
+		</thead>
+		<tbody>
+			@if (TemplateBody != null)
+			{
+				@foreach (var rowData in data)
+				{
+					@TemplateBody(rowData)
+				}
+			}
+		</tbody>
+		<tfoot>
+			@if (TemplateFooter != null)
+			{
+				@TemplateFooter
+			}
+		</tfoot>
+	</table>
+</div>
 
 @if (Paginator)
 {
@@ -57,7 +58,7 @@
 
 			<li class="page-item @(currentPage == GetTotalPages() ? "disabled" : "")">
 				<button class="page-link" @onclick="@(() => OnPageChange(currentPage + 1))"
-					disabled="@(currentPage == GetTotalPages())">
+						disabled="@(currentPage == GetTotalPages())">
 					<i class="bi bi-chevron-double-right"></i>
 				</button>
 			</li>
@@ -66,32 +67,152 @@
 }
 
 @code {
+
+	/// <summary>
+	/// When specified as true, enables the pagination.
+	/// </summary>
+	[Parameter]
+	public Colors HeadColor { get; set; } = Colors.None;
+
+	private string headColor => HeadColor != Colors.None ? "table-" + HeadColor.ToColorsName() : "";
+
+	/// <summary>
+	/// When specified as true, enables the pagination.
+	/// </summary>
 	[Parameter]
 	public bool Paginator { get; set; } = false;
 
+	/// <summary>
+	/// Whether to show page links.
+	/// </summary>
 	[Parameter]
-	[EditorRequired]
-	public List<TItem> Value { get; set; } = new List<TItem>();
+	public bool ShowPageLinks { get; set; } = false;
+
+	/// <summary>
+	/// When enabled, icons are displayed on paginator to go first and last page.
+	/// </summary>
+	[Parameter]
+	public bool ShowFirstLastIcon { get; set; } = true;
+
+	/// <summary>
+	/// Whether to show it even there is only one page.
+	/// </summary>
+	[Parameter]
+	public bool AlwaysShowPaginator { get; set; } = true;
+
+	/// <summary>
+	/// Number of page links to display in paginator.
+	/// </summary>
+	[Parameter]
+	public int PageLinks { get; set; } = 5;
+
+	/// <summary>
+	/// Number of rows to display per page.
+	/// </summary>
+	[Parameter]
+	public int Rows { get; set; } = default!;
+
+	/// <summary>
+	/// List of integer values to display inside rows per page dropdown of paginator
+	/// </summary>
+	[Parameter]
+	public List<int> RowsPerPageOptions { get; set; } = default!;
+
+	/// <summary>
+	/// A list of objects to display..
+	/// </summary>
+	[Parameter]
+	public List<TItem> Value { get; set; } = default!;
+
+	/// <summary>
+	/// A list of objects to represent dynamic columns.
+	/// </summary>
+	[Parameter]
+	public List<IColumns> Columns { get; set; } = default!;
+
+	/// <summary>
+	/// Displays a loader to indicate data load is in progress.
+	/// </summary>
+	[Parameter]
+	public bool Loading { get; set; } = false;
+
 
 	[Parameter]
-	public RenderFragment<TItem> TemplateBody { get; set; } = default!;
+	public TableStriped Striped { get; set; } = TableStriped.None;
+
+	private string striped => Striped.ToTableStripedNameCssClass();
 
 	[Parameter]
-	public List<IColumns> Columns { get; set; } = new List<IColumns>();
+	public bool Bordered { get; set; } = false;
 
+	private string bordered => Bordered ? "table-bordered" : "" ;
+
+
+	/// <summary>
+	/// Defines if the table is responsive.
+	/// </summary>
 	[Parameter]
-	public RenderFragment<List<IColumns>> TemplateHeader { get; set; } = default!;
+	public TableResponsive Responsive { get; set; } = TableResponsive.None;
 
-
-	// Use RowsPerPage for pagination, default to 10
+	private string responsive => Responsive.ToTableResponsiveNameCssClass();
+	/// <summary>
+	/// Style class of the table.
+	/// </summary>
 	[Parameter]
-	public int RowsPerPage { get; set; } = default!;
+	public string TableStyleClass { get; set; } = default!;
 
+	private string tableStyleClass => TableStyleClass;
+
+
+	/// <summary>
+	/// Adds hover effect to rows.
+	/// </summary>
+	[Parameter]
+	public bool RowHover { get; set; } = false;
+
+	private string rowHover => RowHover ? "table-hover" : "";
+
+
+	/// <summary>
+	/// Defines if data is loaded and interacted with in lazy manner.
+	/// </summary>
+	[Parameter]
+	public bool Lazy { get; set; } = false;
+
+	/// <summary>
+	/// Custom caption template.
+	/// </summary>
 	[Parameter]
 	public RenderFragment TemplateCaption { get; set; } = default!;
 
+	/// <summary>
+	/// Custom footer template.
+	/// </summary>
 	[Parameter]
 	public RenderFragment TemplateFooter { get; set; } = default!;
+
+	/// <summary>
+	/// Custom grouped header template.
+	/// </summary>
+	[Parameter]
+	public RenderFragment<List<IColumns>> TemplateHeader { get; set; } = default!;
+
+	/// <summary>
+	/// Custom body template.
+	/// </summary>
+	[Parameter]
+	public RenderFragment<TItem> TemplateBody { get; set; } = default!;
+
+	/// <summary>
+	/// Callback to invoke when pagination occurs.
+	/// </summary>
+	public EventCallback<string> OnPage { get; set; }
+
+	/// <summary>
+	/// Callback to invoke when paging, sorting or filtering happens in lazy mode.
+	/// </summary>
+	public EventCallback<TableLazyLoadEvent> OnLazyLoad { get; set; }
+
 
 	private List<TItem> data = new List<TItem>();
 	private int currentPage = 1;
@@ -117,7 +238,7 @@
 		}
 
 		// Handle RowsPerPage being null or 0 (show all data)
-		int pageSize = RowsPerPage > 0 ? RowsPerPage : Value.Count;
+		int pageSize = Rows > 0 ? Rows : Value.Count;
 
 		data = Value.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 	}
@@ -130,7 +251,7 @@
 		}
 
 		int totalItems = Value.Count;
-		int totalPages = (int)Math.Ceiling((double)totalItems / RowsPerPage);
+		int totalPages = (int)Math.Ceiling((double)totalItems / Rows);
 		return totalPages;
 	}
 
@@ -142,4 +263,7 @@
 			CreatePaginatedData();
 		}
 	}
+
+	
+
 }

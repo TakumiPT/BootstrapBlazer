@@ -16,10 +16,11 @@ public partial class Tooltip : ComponentBase, IAsyncDisposable
 
 	[Parameter]
 	public RenderFragment ChildContent { get; set; } = default!;
-	private string placement => Placement.ToTooltipPlacementName();
 
 	[Parameter]
 	public TooltipPlacement Placement { get; set; } = TooltipPlacement.Top;
+
+	private string placement => Placement.ToTooltipPlacementName();
 
 	[Parameter]
 	[EditorRequired]
@@ -39,7 +40,6 @@ public partial class Tooltip : ComponentBase, IAsyncDisposable
 
 	public async ValueTask DisposeAsync()
 	{
-
 		await JS.InvokeVoidAsync("window.coreUI.tooltip.dispose", ElementRef);
 	}
 }

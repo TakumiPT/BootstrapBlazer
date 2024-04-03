@@ -3,14 +3,20 @@
 @rendermode InteractiveServer
 
 
-<Table Value="Products" Columns="ColumnsData" RowsPerPage="5" Paginator="true">
+<Table Value="Products"
+	   Columns="ColumnsData"
+	   Rows="5"
+	   Paginator="true"
+	   Bordered="true"
+	   HeadColor="Colors.Light"
+	   Responsive="TableResponsive.Allways">
 	<TemplateHeader>
 
 		<tr>
 
 			@foreach (var col in @context)
 			{
-					<th scope="col">@col.Header</th>
+				<th scope="col">@col.Header</th>
 			}
 
 		</tr>
@@ -20,13 +26,13 @@
 		<tr>
 			@foreach (var col in ColumnsData)
 			{
-					<td>
+				<td>
 
 					@if (context.GetType().GetProperty(col.Header) != null)
 					{
 						@context.GetType().GetProperty(col.Header)?.GetValue(context)
 					}
-					</td>
+				</td>
 			}
 		</tr>
 	</TemplateBody>
