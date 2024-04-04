@@ -38,32 +38,8 @@
 
 @if (Paginator)
 {
-	<nav aria-label="Page navigation" class="pagination justify-content-center">
-		<ul class="pagination">
-			<li class="page-item @(currentPage == 1 ? "disabled" : "")">
-				<button class="page-link" @onclick="@(() => OnPageChange(currentPage - 1))" disabled="@(currentPage == 1)">
-					<i class="bi bi-chevron-double-left"></i>
-				</button>
-			</li>
 
-			@for (int i = 1; i <= GetTotalPages(); i++)
-			{
-				// Capture the current value of i in a separate variable
-				int currentPageNumber = i;
-
-				<li class="page-item @(currentPage == currentPageNumber ? "active" : "")">
-					<button class="page-link" @onclick="@(() => OnPageChange(currentPageNumber))">@i</button>
-				</li>
-			}
-
-			<li class="page-item @(currentPage == GetTotalPages() ? "disabled" : "")">
-				<button class="page-link" @onclick="@(() => OnPageChange(currentPage + 1))"
-						disabled="@(currentPage == GetTotalPages())">
-					<i class="bi bi-chevron-double-right"></i>
-				</button>
-			</li>
-		</ul>
-	</nav>
+	<Paginatior TotalRecords="120" Rows="10" First="0" OnPageChange="OnPageChangedAsync" />
 }
 
 @code {
@@ -264,6 +240,12 @@
 		}
 	}
 
+
+	private async Task OnPageChangedAsync(PaginatorState newPageNumber)
+	{
+		
+		await Task.Run(() => { Console.WriteLine(newPageNumber); });
+	}
 	
 
 }
