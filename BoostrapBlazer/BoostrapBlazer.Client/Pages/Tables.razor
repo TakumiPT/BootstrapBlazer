@@ -3,13 +3,19 @@
 @rendermode InteractiveServer
 
 
-<Table Value="Products"
+<Table Value="results"
 	   Columns="ColumnsData"
-	   Rows="5"
+	   Rows="rows"
 	   Paginator="true"
 	   Bordered="true"
 	   HeadColor="Colors.Light"
-	   Responsive="TableResponsive.Allways">
+	   Responsive="TableResponsive.MD"
+	   RowsPerPageOptions="rowsPerPageOptions"
+	   TotalRecords="totalRecords"
+	   First="first"
+	   Lazy="true"
+	   OnLazyLoad="OnLazyLoad"
+	   Loading="isLoading">
 	<TemplateHeader>
 
 		<tr>
@@ -24,29 +30,50 @@
 
 	<TemplateBody>
 		<tr>
-			@foreach (var col in ColumnsData)
+			@foreach (var col in @context.Columns)
 			{
+				var currentRowData = @context.Rowdata;
 				<td>
-
-					@if (context.GetType().GetProperty(col.Header) != null)
+					Hello
+					@if (currentRowData.GetType().GetProperty(col.Header) != null)
 					{
-						@context.GetType().GetProperty(col.Header)?.GetValue(context)
+						@currentRowData.GetType().GetProperty(col.Header)?.GetValue(currentRowData)
 					}
 				</td>
 			}
 		</tr>
 	</TemplateBody>
+	<TemplateEmptyMessage>
+		<tr>
+			<td colspan="@context.Count" rowspan="2">
+				<div class="d-flex justify-content-center align-items-center" style="min-height: 200px">
+					<p>No products found.</p>
+
+				</div>
+			</td>
+		</tr>
+	</TemplateEmptyMessage>
 </Table>
 
 @code {
 
-	public class Columns : IColumns
+	// these values should be hardcoded or reset by the api response at first run
+	private int first = 0;
+	private int rows = 5;
+	// this value should be set by api response
+	private int totalRecords = 120;
+	private List<Product>? results;
+
+
+	private bool isLoading = false;
+
+	private class Columns : IColumns
 	{
 		public required string Field { get; set; }
 		public required string Header { get; set; }
 	}
 
-	public class Product
+	private class Product
 	{
 		public string Id { get; set; }
 		public string Code { get; set; }
@@ -60,7 +87,7 @@
 		public float Rating { get; set; }
 	}
 
-	public List<IColumns> ColumnsData = new List<IColumns>()
+	private List<IColumns> ColumnsData = new List<IColumns>()
 	{
 		new Columns { Field = "Code", Header = "Code" },
 		new Columns { Field = "Name", Header = "Name" },
@@ -68,9 +95,30 @@
 		new Columns { Field = "Quantity", Header = "Quantity" }
 	};
 
-	public List<Product> Products { get; set; } = new List<Product>()
-  {
-	// Product 1
+
+	private List<SelectItem> rowsPerPageOptions = new List<SelectItem>
+	{
+		new SelectItem
+		{
+			Label= "5 Publicações",
+			Value = 5
+		},
+		new SelectItem
+		{
+			Label= "10 Publicações",
+			Value = 10
+		},
+		new SelectItem
+		{
+			Label= "50 Publicações",
+			Value = 50
+		}
+	};
+
+	protected override void OnInitialized()
+	{
+		this.results = new List<Product>()
+		{
 	  new Product
 	  {
 		Id = "P1001",
@@ -84,7 +132,6 @@
 		InventoryStatus = "INSTOCK",
 		Rating = 4.5f
 	  },
-	  // Product 2
 	  new Product
 	  {
 		Id = "P1002",
@@ -98,7 +145,6 @@
 		InventoryStatus = "LOWSTOCK",
 		Rating = 3.8f
 	  },
-	  // Product 3
 	  new Product
 	  {
 		Id = "P1003",
@@ -112,7 +158,6 @@
 		InventoryStatus = "OUTOFSTOCK",
 		Rating = 5.0f
 	  },
-	  // Product 4
 	  new Product
 	  {
 		Id = "P1004",
@@ -126,7 +171,6 @@
 		InventoryStatus = "INSTOCK",
 		Rating = 4.2f
 	  },
-	  // Product 5
 	  new Product
 	  {
 		Id = "P1005",
@@ -140,61 +184,39 @@
 		InventoryStatus = "INSTOCK",
 		Rating = 4.8f
 	  },
-	  // Product 6 (Slightly different from others)
-	  new Product
-	  {
-		Id = "P1001", // Reuse ID but with different properties
-		Code = "SAMPLE_CODE_REUSED",
-		Name = "Similar But Different",
-		Description = "This product has a reused ID but different details.",
-		Image = "product_reused.jpg",
-		Price = 29.50m,
-		Category = "Electronics",
-		Quantity = 15,
-		InventoryStatus = "INSTOCK",
-		Rating = 4.0f
-	  },
-	  // Product 7
-	  new Product
-	  {
-		Id = "P1006",
-		Code = "SAMPLE_CODE_06",
-		Name = "Unique Product 6",
-		Description = "This is a unique product description 6.",
-		Image = "product_06.jpg",
-		Price = 22.00m,
-		Category = "Toys",
-		Quantity = 70,
-		InventoryStatus = "INSTOCK",
-		Rating = 4
-	  },
-	  // Product 8
-	  new Product
-	  {
-		Id = "P1007",
-		Code = "SAMPLE_CODE_07",
-		Name = "Unique Product 7",
-		Description = "This is a unique product description 7.",
-		Image = "product_07.jpg",
-		Price = 99.99m,
-		Category = "Appliances",
-		Quantity = 2,
-		InventoryStatus = "INSTOCK",
-		Rating = 4.7f
-	  },
-		new Product
-		{
-		  Id = "1001",
-		  Code = "SAMPLE_CODE_1",
-		  Name = "Sample Product 1",
-		  Description = "This is a sample product description.",
-		  Image = "product_1.jpg",
-		  Price = 25.50m,
-		  Category = "Electronics",
-		  Quantity = 50,
-		  InventoryStatus = "INSTOCK",
-		  Rating = 4
-		},
+
   };
+		base.OnInitialized();
+	}
+
+	async Task OnLazyLoad(TableLazyLoadEvent ev)
+	{
+		this.isLoading = true;
+		try
+		{
+			// var response = await FetchDataFromApiAsync(ev.First, ev.Rows); // Replace with your API call
+			// this.results = response.Data;
+			// this.first = response.First;
+			// this.rows = response.Rows;
+			// this.totalRecords = response.TotalRecords;
+
+			// Simulate API delay
+			await Task.Delay(2000); // Replace with desired delay (milliseconds)
+			this.first = ev.First;
+			this.rows = ev.Rows;
+			this.totalRecords = 120;
+		}
+		catch (Exception ex)
+		{
+
+			// Handle API errors gracefully
+			Console.WriteLine(ex); // replace with toast
+		}
+		finally
+		{
+			this.isLoading = false;
+		}
+	}
+
 }
 

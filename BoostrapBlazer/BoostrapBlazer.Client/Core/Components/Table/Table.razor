@@ -3,54 +3,98 @@
 
 @typeparam TItem
 
-@if (TemplateCaption != null)
-{
-	<div>
-		@TemplateCaption
+@* Table only has code for lazy load *@
+
+<div class="table-wrapper @(Loading? "position-relative" : "")">
+
+	@if (TemplateCaption != null)
+	{
+		<div>
+			@TemplateCaption
+		</div>
+
+	}
+
+	<div class="@responsive ">
+		<table class="table @striped @bordered @rowHover @tableStyleClass">
+			<thead class="@headColor">
+				@if (TemplateHeader != null)
+				{
+					@TemplateHeader(Columns)
+				}
+			</thead>
+			<tbody>
+				@if (TemplateEmptyMessage != null && isEmpty())
+				{
+					@TemplateEmptyMessage(Columns)
+				}
+				else
+				{
+					@if (TemplateBody != null)
+					{
+						@foreach (var rowData in Value)
+						{
+							var currentRowData = rowData;
+							@TemplateBody((Columns, currentRowData))
+						}
+					}
+
+				}
+
+
+			</tbody>
+			<tfoot>
+				@if (TemplateFooter != null)
+				{
+					@TemplateFooter
+				}
+			</tfoot>
+		</table>
+
 	</div>
 
-}
-<div class="@responsive">
-	<table class="table @striped @bordered @rowHover @tableStyleClass">
-		<thead class="@headColor">
-			@if (TemplateHeader != null)
-			{
-				@TemplateHeader(Columns)
-			}
-		</thead>
-		<tbody>
-			@if (TemplateBody != null)
-			{
-				@foreach (var rowData in data)
-				{
-					@TemplateBody(rowData)
-				}
-			}
-		</tbody>
-		<tfoot>
-			@if (TemplateFooter != null)
-			{
-				@TemplateFooter
-			}
-		</tfoot>
-	</table>
+
+	@if (Paginator)
+	{
+
+		<Paginatior TotalRecords="@TotalRecords" Rows="@Rows" First="@First" RowsPerPageOptions="@RowsPerPageOptions" ShowPageLinks="@ShowPageLinks" PageLinkSize="@PageLinks" OnPageChange="OnPageChange" />
+	}
+
+	@if (Loading)
+	{
+		<div class="d-flex justify-content-center align-items-center position-absolute top-0 w-100 h-100">
+			<div class="spinner-border z-3" style="width: 4rem; height: 4rem;" role="status">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+			<div class="position-absolute bg-body-tertiary z-2 opacity-75 top-0 w-100 h-100 pe-none" @onkeydown:preventDefault @onkeydown:stopPropagation @onclick:preventDefault @onclick:stopPropagation></div>
+		</div>
+	}
 </div>
 
-@if (Paginator)
-{
-
-	<Paginatior TotalRecords="120" Rows="10" First="0" OnPageChange="OnPageChangedAsync" />
-}
-
 @code {
-
 	/// <summary>
-	/// When specified as true, enables the pagination.
+	/// Define the bg color of the Header.
 	/// </summary>
 	[Parameter]
 	public Colors HeadColor { get; set; } = Colors.None;
 
 	private string headColor => HeadColor != Colors.None ? "table-" + HeadColor.ToColorsName() : "";
+
+	/// <summary>
+	/// Define if the table has striped rows or columns or none.
+	/// </summary>
+	[Parameter]
+	public TableStriped Striped { get; set; } = TableStriped.None;
+
+	private string striped => Striped.ToTableStripedNameCssClass();
+
+	/// <summary>
+	/// Define if the table is bordered.
+	/// </summary>
+	[Parameter]
+	public bool Bordered { get; set; } = false;
+
+	private string bordered => Bordered ? "table-bordered" : "";
 
 	/// <summary>
 	/// When specified as true, enables the pagination.
@@ -62,19 +106,8 @@
 	/// Whether to show page links.
 	/// </summary>
 	[Parameter]
-	public bool ShowPageLinks { get; set; } = false;
+	public bool ShowPageLinks { get; set; } = true;
 
-	/// <summary>
-	/// When enabled, icons are displayed on paginator to go first and last page.
-	/// </summary>
-	[Parameter]
-	public bool ShowFirstLastIcon { get; set; } = true;
-
-	/// <summary>
-	/// Whether to show it even there is only one page.
-	/// </summary>
-	[Parameter]
-	public bool AlwaysShowPaginator { get; set; } = true;
 
 	/// <summary>
 	/// Number of page links to display in paginator.
@@ -86,13 +119,26 @@
 	/// Number of rows to display per page.
 	/// </summary>
 	[Parameter]
-	public int Rows { get; set; } = default!;
+	public int Rows { get; set; }
 
 	/// <summary>
 	/// List of integer values to display inside rows per page dropdown of paginator
 	/// </summary>
 	[Parameter]
-	public List<int> RowsPerPageOptions { get; set; } = default!;
+	public List<SelectItem>? RowsPerPageOptions { get; set; }
+
+	/// <summary>
+	/// Number of total records, defaults to length of value when not defined.
+	/// </summary>
+	[Parameter]
+	public int TotalRecords { get; set; } = 0;
+
+
+	/// <summary>
+	/// Index of the first row to be displayed.
+	/// </summary>
+	[Parameter]
+	public int First { get; set; } = 0;
 
 	/// <summary>
 	/// A list of objects to display..
@@ -113,15 +159,7 @@
 	public bool Loading { get; set; } = false;
 
 
-	[Parameter]
-	public TableStriped Striped { get; set; } = TableStriped.None;
 
-	private string striped => Striped.ToTableStripedNameCssClass();
-
-	[Parameter]
-	public bool Bordered { get; set; } = false;
-
-	private string bordered => Bordered ? "table-bordered" : "" ;
 
 
 	/// <summary>
@@ -177,75 +215,50 @@
 	/// Custom body template.
 	/// </summary>
 	[Parameter]
-	public RenderFragment<TItem> TemplateBody { get; set; } = default!;
+	public RenderFragment<(List<IColumns> Columns, TItem Rowdata)> TemplateBody { get; set; } = default!;
+
 
 	/// <summary>
-	/// Callback to invoke when pagination occurs.
+	/// Custom empty message template.
 	/// </summary>
-	public EventCallback<string> OnPage { get; set; }
+	[Parameter]
+	public RenderFragment<List<IColumns>> TemplateEmptyMessage { get; set; } = default!;
+
 
 	/// <summary>
 	/// Callback to invoke when paging, sorting or filtering happens in lazy mode.
 	/// </summary>
+	[Parameter]
 	public EventCallback<TableLazyLoadEvent> OnLazyLoad { get; set; }
 
 
-	private List<TItem> data = new List<TItem>();
 	private int currentPage = 1;
 
 	protected override void OnInitialized()
 	{
-		CreatePaginatedData();
+		base.OnInitialized();
 	}
 
-	private void CreatePaginatedData()
+
+	private bool isEmpty()
 	{
-		// Ensure Values is not null or empty
-		if (Value?.Any() != true)
-		{
-			data = new List<TItem>();
-			return;
-		}
-
-		if (Paginator == false)
-		{
-			data = Value;
-			return;
-		}
-
-		// Handle RowsPerPage being null or 0 (show all data)
-		int pageSize = Rows > 0 ? Rows : Value.Count;
-
-		data = Value.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+		var data = this.Value;
+		return data == null || data.Count == 0;
 	}
 
-	private int GetTotalPages()
-	{
-		if (Value?.Any() != true)
-		{
-			return 0;
-		}
 
-		int totalItems = Value.Count;
-		int totalPages = (int)Math.Ceiling((double)totalItems / Rows);
-		return totalPages;
-	}
-
-	private void OnPageChange(int newPage)
+	private async void OnPageChange(PaginatorState paginatorState)
 	{
-		if (newPage >= 1 && newPage <= GetTotalPages()) // Ensures valid page range
+		if (this.Lazy)
 		{
-			currentPage = newPage;
-			CreatePaginatedData();
+			var lazyEvent = new TableLazyLoadEvent
+				{
+					First = paginatorState.First,
+					Rows = paginatorState.Rows,
+				};
+			await this.OnLazyLoad.InvokeAsync(lazyEvent);
 		}
 	}
 
-
-	private async Task OnPageChangedAsync(PaginatorState newPageNumber)
-	{
-		
-		await Task.Run(() => { Console.WriteLine(newPageNumber); });
-	}
-	
 
 }
