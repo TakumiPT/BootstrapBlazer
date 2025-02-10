@@ -1,1 +1,1 @@
-# BoostrapBlazer
+# BootsrapBlazer
